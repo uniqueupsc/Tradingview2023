@@ -1,0 +1,24 @@
+//@version=5
+indicator(title="Previous Day High and Low", shorttitle="Previous Day High and Low", overlay=true)
+
+// Get previous day's high, low, open, close, and calculate the average
+D_High  = request.security(syminfo.tickerid, 'D', high[1])
+D_Low   = request.security(syminfo.tickerid, 'D', low[1])
+D_Close = request.security(syminfo.tickerid, 'D', close[1])
+D_Open  = request.security(syminfo.tickerid, 'D', open[1])
+D_AVG   = (D_High + D_Low) / 2
+
+DD_AVG = ((request.security(syminfo.tickerid, 'D', high[0]) + request.security(syminfo.tickerid, 'D', high[1])) + (request.security(syminfo.tickerid, 'D', low[0]) + request.security(syminfo.tickerid, 'D', low[1])))/4
+// Plot the previous day's high, low, and average only on intraday charts
+plot(timeframe.isintraday ? D_High : na, title="Daily High", style=plot.style_line, color=color.blue, linewidth=1)
+plot(timeframe.isintraday ? D_Low : na, title="Daily Low", style=plot.style_line, color=color.blue, linewidth=1)
+plot(timeframe.isintraday ? D_AVG : na, title="Daily Avg", style=plot.style_line, color=color.black, linewidth=1)
+
+plot(timeframe.isintraday ? DD_AVG : na, title="Daily Avg", style=plot.style_line, color=color.yellow, linewidth=1)
+
+
+// Add alert when price crosses the daily average
+alertcondition(ta.cross(close, D_AVG), title="Price Crossing Daily Average", message="Price has crossed the Daily Average level!")
+
+// Optional: Plot a cross mark when the alert is triggered for better visualization
+// plotshape(series=ta.cross(close, D_AVG), location=location.belowbar, color=color.red, style=shape.labeldown, title="Cross Alert", text="Cross")
