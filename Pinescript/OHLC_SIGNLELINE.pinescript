@@ -1,0 +1,14 @@
+//@version = 5
+indicator("Request",overlay = true)
+ma = ta.sma(close,15)
+
+[Open,High,Low,Close] = request.security(syminfo.tickerid,"240",[open,high,low,close]) //Multiple of 60
+
+plot(Open)
+plot(High)
+
+
+// plotshape(close > open,style = shape.arrowdown)
+plotshape(ta.rising(close,3),style = shape.labeldown,text = "BUY",color = color.green,textcolor = color.white)
+//plot(close)
+
