@@ -1,0 +1,32 @@
+//@version=5
+indicator("MM", overlay=true)
+
+// Input parameters
+rsiPeriod = input.int(14, title="RSI Period")
+rsiThreshold = 70
+priceRangeMin = 100
+priceRangeMax = 300
+
+// Calculate RSI
+rsi = ta.rsi(close, rsiPeriod)
+
+// Function to check for the pattern: 2 Red candles followed by 2 Green candles
+isRedCandle(bar) =>
+    close[bar] < open[bar]
+
+isGreenCandle(bar) =>
+    close[bar] > open[bar]
+
+// Pattern: 2 red candles followed by 2 green candles
+patternDetected = isRedCandle(1) and isRedCandle(2) and isGreenCandle(0) and isGreenCandle(3)
+
+// Condition for next red candle within price range and RSI below 70
+priceRangeCondition = (high[1] - low[1] >= priceRangeMin) and (high[1] - low[1] <= priceRangeMax)
+rsiCondition = rsi < rsiThreshold
+
+// Combine all conditions
+validPattern = patternDetected and priceRangeCondition and rsiCondition
+
+// Plotting
+bgcolor(validPattern ? color.new(color.green, 90) : na, title="Valid Pattern")
+plotshape(validPattern, location=location.belowbar, color=color.green, style=shape.labelup, title="Pattern Detected")
