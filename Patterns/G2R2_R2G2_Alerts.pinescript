@@ -1,0 +1,44 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © suryachandrabeeram
+
+//@version=6
+indicator("GoldSpot_00_P0",  overlay = true)
+
+
+
+chat_id             = input.string("-1002590450929", options=["-1002590450929","-1002448424927","-1002265766967","-1002319944826", "-1002357244050"], title="chat_id")
+var string Texts    = na
+M5_Confirm          = barstate.isconfirmed
+
+
+
+MinCandleBody                               =           input.float( .01 ,  title="Min Body Size of Each Candle", minval=0.0)
+
+
+isRed(candleClose, candleOpen) 		        =>          candleClose < candleOpen
+isGreen(candleClose, candleOpen) 	        =>          candleClose > candleOpen
+diff(candleClose, candleOpen, threshold)    =>          math.abs(candleClose - candleOpen) >= threshold   
+
+
+
+
+// Pattern              2 r 2g
+r2g2                                        = (isRed(close[3], open[3]) and  isRed(close[2], open[2])       and isGreen(close[1], open[1]) and isGreen(close, open)  )  and diff(close[3], open[3] , MinCandleBody)  and diff(close[2], open[2] , MinCandleBody) and diff(close[1], open[1] , MinCandleBody) and diff(close, open, MinCandleBody)
+plotshape(r2g2,          title="2r2g",            location=location.belowbar, color=color.green, style=shape.diamond,           text= "", textcolor = color.white , size=size.small ,offset=0)
+
+if r2g2
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" 2R2G Pattern Formation ...........` \" }"
+    alert(Texts,                    alert.freq_once_per_bar_close)
+
+
+// Pattern              2g2r
+g2r2                                        = (isGreen(close[3], open[3]) and  isGreen(close[2], open[2])       and isRed(close[1], open[1]) and isRed(close, open)  )  and diff(close[3], open[3] , MinCandleBody)  and diff(close[2], open[2] , MinCandleBody) and diff(close[1], open[1] , MinCandleBody) and diff(close, open, MinCandleBody)
+plotshape(g2r2,          title="g2r2",            location=location.abovebar, color=color.red, style=shape.flag,           text= "", textcolor = color.white , size=size.small ,offset=0)
+
+if g2r2
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" 2G2R Pattern Formation ...........` \" }"
+    alert(Texts,                    alert.freq_once_per_bar_close)
+
+
+
+
