@@ -1,0 +1,15 @@
+//@version=5
+indicator("EMA Based on High, Low, Close", shorttitle="EMA HLC", overlay=true)
+
+// User input for the EMA period (length)
+length = input.int(32, title="EMA Length", minval=1)
+
+// Calculate the EMA for High, Low, and Close
+ema_high = ta.ema(high, length)
+ema_low = ta.ema(low, length)
+ema_close = ta.ema(close, length)
+
+// Plot the EMAs
+plot(ema_high, color=color.green, linewidth=2, title="EMA High")
+plot(ema_low, color=color.red, linewidth=2, title="EMA Low")
+plot(ema_close, color=color.blue, linewidth=2, title="EMA Close")
