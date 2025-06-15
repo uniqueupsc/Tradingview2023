@@ -1,0 +1,35 @@
+//@version=5
+indicator(title="Golden Crossover Custom", overlay=true )
+// Moving Average Exponential
+
+fastLen = input.int(defval = 13, title =  "Fast Length",minval = 4)
+slowLen = input.int(defval = 40, title =  "Slow Length",minval = 4)
+
+src = input(close, title="Source")
+// offset = input.int(title="Offset", defval=0, minval=-500, maxval=500)
+
+fastSMA  = ta.sma(src, fastLen)
+slowSMA  = ta.sma(src, slowLen)
+
+goldenCross = ta.crossover(fastSMA,slowSMA)
+goldenShort = ta.crossover(slowSMA,fastSMA)
+
+
+if goldenCross
+    alert("Gloden Cross",alert.freq_once_per_bar_close)
+
+// plot(slowSMA, color = color.lime)
+// plot(fastSMA, color = color.yellow)
+
+plot(goldenCross ? fastSMA : na, color = color.lime , style = plot.style_cross, linewidth = 4 )
+plot(goldenShort ? slowSMA : na, color = color.rgb(230, 0, 0) , style = plot.style_cross, linewidth = 4 )
+
+
+
+
+
+
+
+
+
+
