@@ -1,0 +1,12 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+
+//@version = 5
+indicator(title = "PDL & PDL",overlay = true)
+pdl = request.security(syminfo.tickerid,'D', low[0])
+pdh = request.security(syminfo.tickerid,'D', high[0])
+
+plot(pdl,style = plot.style_line,color = color.green)
+plot(pdh,style = plot.style_line,color = color.red)
+
+
+
