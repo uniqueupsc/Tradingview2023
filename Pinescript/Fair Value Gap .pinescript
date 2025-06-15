@@ -1,0 +1,52 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © suryachandrabeeram
+
+//@version=6
+indicator("Fair Value Gap " , shorttitle = "FVG" , overlay = true, max_lines_count = 500, max_boxes_count = 500)
+plot(close)
+
+
+FvgGap = input.int(10, "Gap Fvg", minval=1)
+
+
+// plot(close *-1)
+var float[] Mhg = array.new_float()
+var float[] Mlw = array.new_float()
+
+if (array.size(Mhg) >= 3)
+    array.shift(Mhg)
+    array.shift(Mlw)
+
+
+// Function to determine the main candle (bullish or neutral)
+GetMainCandle(Ph, pl, ch, cl) =>
+    if ch > Ph
+        [true, "BULL", ch, ch]
+    else if cl < pl
+        [true, "BEAR", ch, ch]
+    else
+        [false, "IN", ch, cl]
+
+GetFairValueGap(Mhg,Mlw, hgf , lwf)  =>
+    [true,""]
+//
+
+
+[CMain,Trend,Hg,lw]  = GetMainCandle(array.get(Mhg, array.size(Mhg) - 1), array.get(Mlw, array.size(Mlw) - 1), high[1], low[1])
+
+
+if array.size(Mhg) <= 1
+    if CMain   
+        array.push(Mhg, Hg)  // Example: Adding the close to Mhg array
+        array.push(Mlw, lw)  // Example: Adding the open to Mlw array
+
+else
+    
+    FvgGap := 0
+
+// if array.size(Mhg) >= 2
+    
+
+
+
+
