@@ -1,0 +1,18 @@
+//@version=5
+indicator("Previous Day High/Low", overlay=true)
+
+// Get the previous day high and low
+var float prevDayHigh = na
+var float prevDayLow = na
+
+if (dayofweek != dayofweek[1])
+    prevDayHigh := high[1]
+    prevDayLow := low[1]
+    
+// Calculate the daily high and low
+prevDayHigh := ta.valuewhen(dayofweek != dayofweek[1], high[1], 1)
+prevDayLow := ta.valuewhen(dayofweek != dayofweek[1], low[1], 1)
+
+// Plot the previous day high and low
+plot(prevDayHigh, color=color.green, title="Previous Day High", linewidth=2, style=plot.style_line)
+plot(prevDayLow, color=color.red, title="Previous Day Low", linewidth=2, style=plot.style_line)
