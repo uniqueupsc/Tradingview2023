@@ -1,0 +1,294 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © suryachandrabeeram
+
+//@version=6
+indicator("Gold Jammer" , overlay =  true)
+
+
+chat_id           = input.string("-1002590450929", options=["-1002590450929","-1002448424927","-1002265766967","-1002319944826", "-1002357244050"], title="chat_id")
+
+
+M5_Confirm        = barstate.isconfirmed
+
+is_new_session    = ta.change(time('D')) != 0      // Check if a new session has started
+
+// Declare and initialize variables for previous session's high, low, and close
+var float prev_sess_high = na
+var float prev_sess_low = na
+var float prev_sess_close = na
+var float five_min_close = na
+
+if M5_Confirm
+    five_min_close     := close
+
+
+
+
+
+prev_day_high       = request.security(syminfo.tickerid, 'D', high[0])
+prev_day_low        = request.security(syminfo.tickerid, 'D', low[0])
+prev_day_close      = request.security(syminfo.tickerid, 'D', close[0])
+is_1min_close       = time_close('1') != time_close('1')[1]
+
+if is_new_session and is_1min_close
+    prev_sess_high      := prev_day_high
+    prev_sess_low       := prev_day_low
+    prev_sess_close     := prev_day_close
+
+pivot        = (prev_sess_high + prev_sess_low + prev_sess_close) / 3.0
+bc           = (prev_sess_high + prev_sess_low) / 2.0
+tc           = pivot - bc + pivot
+
+// Cpr Pivots
+plot(pivot, title = 'Pivot',    color = color.lime, linewidth = 1, style = plot.style_circles)
+plot(bc,    title = 'bc',       color = color.lime, linewidth = 1, style = plot.style_circles)
+plot(tc,    title = 'tc',       color = color.lime, linewidth = 1, style = plot.style_circles)
+
+
+
+// Session Open Price
+var float session_open_price = na
+if (time("D") != time("D")[1])
+    session_open_price := open
+// plot(session_open_price, title="Session Open Price", color = color.rgb(24, 24, 24), linewidth = 2, style = plot.style_circles)
+plotshape(series=session_open_price, location=location.absolute, style=shape.labeldown, text="op", color=color.white, textcolor=color.black  )
+
+
+
+
+
+
+
+/// Other Data for Table
+rsiCalc(src, length) =>
+    ta.rsi(src, length)
+
+// Supertrend calculation function
+supertrend(src, factor, length) =>
+    atr = ta.atr(length)
+    upperBand = hlc3 + factor * atr
+    lowerBand = hlc3 - factor * atr
+    var float trend = na
+    trend := na(trend[1]) ? upperBand : (src[1] > trend[1] ? math.max(upperBand, trend[1]) : lowerBand)
+   // trend
+
+// RSI and Supertrend lengths
+rsiLength = 14
+supertrendFactor = 3
+supertrendLength = 10
+
+// Get RSI values for different timeframes
+rsi5            = request.security(syminfo.tickerid, "5", rsiCalc(close, rsiLength))
+rsi10           = request.security(syminfo.tickerid, "10", rsiCalc(close, rsiLength))
+rsi15           = request.security(syminfo.tickerid, "15", rsiCalc(close, rsiLength))
+
+// Get Supertrend values for different timeframes
+supertrend5     = request.security(syminfo.tickerid, "5", supertrend(close, supertrendFactor, supertrendLength))
+supertrend10    = request.security(syminfo.tickerid, "10", supertrend(close, supertrendFactor, supertrendLength))
+supertrend15    = request.security(syminfo.tickerid, "15", supertrend(close, supertrendFactor, supertrendLength))
+
+
+smma_len            = input.int(21, minval=1, title="smma_len")
+smma_src            = input(close,  title="smma_src")
+smma                = 0.0
+smma                := na(smma[1]) ? ta.sma(smma_src, smma_len) : (smma[1] * (smma_len - 1) + smma_src) / smma_len
+smma_color          = close > smma ? color.rgb(224, 244, 0) : color.red
+
+// plot(smma_color,    "SMMA LINE", color = #673AB7)
+// plot(smma, "SMMA LINE", color = smma_color)
+plot(smma, title="SMMA", color=smma_color, linewidth=2)
+
+
+
+
+
+
+
+
+
+// Create table to display values on the chart
+var table myTable = table.new(position.top_right, 5, 5, bgcolor=color.black, border_color=color.white)
+
+// Adjust the vertical position of the table by modifying the y offset in the position
+// Adding an offset (e.g., `-10`) to create a top margin
+var float top_margin_offset = 30
+
+var tstd = close >= supertrend5 ? "G" : "R"
+// Table Headers (row 0)
+if (bar_index == 0)
+    table.cell(myTable, 0, 0, "Timeframe", bgcolor=color.gray, text_color=color.white)
+    table.cell(myTable, 1, 0, "RSI", bgcolor=color.gray, text_color=color.white)
+    table.cell(myTable, 2, 0, "Supertrend", bgcolor=color.gray, text_color=color.white)
+   // table.cell(myTable, 3, 0, "Ema", bgcolor=color.gray, text_color=color.white)
+
+
+
+
+
+
+
+// Insert data into the table (row 1 and row 2)
+table.cell(myTable, 0, 1, "5 min", text_color=color.white)
+if rsi5 >= 50 
+    table.cell(myTable, 1, 1, str.tostring(rsi5, "#.##"), text_color=color.green)
+else
+    table.cell(myTable, 1, 1, str.tostring(rsi5, "#.##"), text_color=color.white)
+
+if tstd == "G"
+    table.cell(myTable, 2, 1, str.tostring(supertrend5, "#.##"), text_color=color.red)
+else
+    table.cell(myTable, 2, 1, str.tostring(supertrend5, "#.##"), text_color=color.green)
+
+
+// supertrendDirection = close > supertrend5 ? "G" : "R"
+table.cell(myTable, 0, 2, "10 min", text_color=color.white)
+// table.cell(myTable, 1, 2, str.tostring(rsi10, "#.##"), text_color=color.white)
+if rsi10 >= 50 
+    table.cell(myTable, 1, 2, str.tostring(rsi10, "#.##"), text_color=color.green)
+else
+    table.cell(myTable, 1, 2, str.tostring(rsi10, "#.##"), text_color=color.white)
+
+tstd                    := close >= supertrend10 ? "G" : "R"
+// table.cell(myTable, 2, 2, str.tostring(supertrend10, "#.##"), text_color=color.white)
+if tstd == "G"
+    table.cell(myTable, 2, 2, str.tostring(supertrend10, "#.##"), text_color=color.green)
+else
+    table.cell(myTable, 2, 2, str.tostring(supertrend10, "#.##"), text_color=color.white)
+
+
+
+
+
+table.cell(myTable, 0, 3, "15 min", text_color=color.white)  // Fixed to use column index 2
+// table.cell(myTable, 1, 3, str.tostring(rsi15, "#.##"), text_color=color.white)  // Fixed to use column index 2
+if rsi15 >= 50 
+    table.cell(myTable,  1, 3, str.tostring(rsi15, "#.##"), text_color=color.green)
+else
+    table.cell(myTable,  1, 3, str.tostring(rsi15, "#.##"), text_color=color.white)
+
+// table.cell(myTable, 2, 3, str.tostring(supertrend15, "#.##"), text_color=color.white)  // Fixed to use column index 2
+tstd    := close >= supertrend15 ? "G" : "R"
+if tstd == "G"
+    table.cell(myTable, 2, 3, str.tostring(supertrend15, "#.##"), text_color=color.red)
+else
+    table.cell(myTable, 2, 3, str.tostring(supertrend15, "#.##"), text_color=color.green)
+
+
+
+
+
+
+var string Texts = na
+// if ta.crossover(five_min_close, pivot)
+if (close[1] < pivot and close > pivot) or (close[1] > pivot and close < pivot) 
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" Touching Pivots line...........` \" }"
+    alert(Texts, alert.freq_once_per_bar_close)
+
+if (close[1] < bc and close > bc) or (close[1] > bc and close < bc) 
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" Touching BC line...........` \" }"
+    alert(Texts, alert.freq_once_per_bar_close)
+
+if (close[1] < tc and close > tc) or (close[1] > tc and close < tc) 
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" Touching BC line...........` \" }"
+    alert(Texts, alert.freq_once_per_bar_close)
+
+
+
+// if M5_Confirm
+//    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" 5M_Close "+str.tostring(close,"#.##")+" Pivot  "+str.tostring(pivot,"#.##")+" TC  "+str.tostring(tc,"#.##")+" BC  "+str.tostring(bc,"#.##")+" Open  "+str.tostring(session_open_price,"#.##")+" ` \" }"
+//    alert(Texts, alert.freq_once_per_bar_close)
+
+
+// Get the volume-weighted average price of hlc3
+hlcVwap         = ta.vwap(hlc3)
+plot(hlcVwap,       title="Vwap")
+// end
+
+
+
+
+
+
+
+
+
+
+
+
+// Get previous day's high and low
+prevDayHigh                         =       request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+prevDayLow                          =       request.security(syminfo.tickerid, "D", low[1], lookahead=barmerge.lookahead_on)
+
+// Plot lines
+line.new(bar_index[1],  prevDayHigh,    bar_index -50, prevDayHigh, color=color.red, width=1, style=line.style_solid)
+line.new(bar_index[1],  prevDayLow,     bar_index - 50, prevDayLow, color=color.green, width=1, style=line.style_solid)
+
+// Extend lines into the future
+if barstate.islast
+    line.new(bar_index-1, prevDayHigh, bar_index+20, prevDayHigh, color=color.red, width=1, style=line.style_solid)
+    line.new(bar_index-1, prevDayLow, bar_index+20, prevDayLow, color=color.green, width=1, style=line.style_solid)
+
+    // Create price labels
+    label.new(bar_index+50, prevDayHigh, text="PrevDayHigh " + str.tostring(prevDayHigh, format.mintick), color=color.red, textcolor=color.white, style=label.style_label_left, yloc=yloc.price)
+    label.new(bar_index+50, prevDayLow, text="PrevDayLow " + str.tostring(prevDayLow, format.mintick), color=color.green, textcolor=color.white, style=label.style_label_left, yloc=yloc.price)
+
+
+
+// Alert conditions
+crossAboveHigh      =   ta.crossover(close, prevDayHigh)
+crossBelowLow       =   ta.crossunder(close, prevDayLow)
+
+// Set up alerts
+if crossAboveHigh  
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" "+syminfo.ticker+" 2R2G Pattern Formation ...........` \" }"
+    alert(Texts,                    alert.freq_once_per_bar_close)
+
+
+if crossBelowLow  
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" "+syminfo.ticker+" 2R2G Pattern Formation ...........` \" }"
+    alert(Texts,                    alert.freq_once_per_bar_close)
+
+
+
+
+
+
+
+
+
+
+
+MinCandleBody                               =           input.float( .01 ,  title="Min Body Size of Each Candle", minval=0.0)
+
+
+isRed(candleClose, candleOpen) 		        =>          candleClose < candleOpen
+isGreen(candleClose, candleOpen) 	        =>          candleClose > candleOpen
+diff(candleClose, candleOpen, threshold)    =>          math.abs(candleClose - candleOpen) >= threshold   
+
+
+
+
+// Pattern              2 r 2g
+r2g2                                        = (isRed(close[3], open[3]) and  isRed(close[2], open[2])       and isGreen(close[1], open[1]) and isGreen(close, open)  )  and diff(close[3], open[3] , MinCandleBody)  and diff(close[2], open[2] , MinCandleBody) and diff(close[1], open[1] , MinCandleBody) and diff(close, open, MinCandleBody)
+plotshape(r2g2,          title="2r2g",            location=location.belowbar, color=color.green, style=shape.diamond,           text= "", textcolor = color.white , size=size.small ,offset=0)
+
+if r2g2
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" 2R2G Pattern Formation ...........` \" }"
+    alert(Texts,                    alert.freq_once_per_bar_close)
+
+
+// Pattern              2g2r
+g2r2                                        = (isGreen(close[3], open[3]) and  isGreen(close[2], open[2])       and isRed(close[1], open[1]) and isRed(close, open)  )  and diff(close[3], open[3] , MinCandleBody)  and diff(close[2], open[2] , MinCandleBody) and diff(close[1], open[1] , MinCandleBody) and diff(close, open, MinCandleBody)
+plotshape(g2r2,          title="g2r2",            location=location.abovebar, color=color.red, style=shape.flag,           text= "", textcolor = color.white , size=size.small ,offset=0)
+
+if g2r2
+    Texts := "{\"chat_id\": \""+chat_id+"\", \"text\": \" 2G2R Pattern Formation ...........` \" }"
+    alert(Texts,                    alert.freq_once_per_bar_close)
+
+
+
+
+
+
+
+
